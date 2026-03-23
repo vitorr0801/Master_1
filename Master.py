@@ -2,7 +2,7 @@ import socket
 import threading
 import json
 
-HOST = "0.0.0.0"
+HOST = "10.62.217.28"
 PORT = 5000
 
 

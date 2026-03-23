@@ -7,7 +7,7 @@ HOST = "10.62.217.28"
 PORT = 5000
 INTERVAL = 30  # segundos
 
-SERVER_UUID = str(uuid.uuid4())
+SERVER_UUID = str("Master_1")
 
 
 def start_worker():
