@@ -3,9 +3,9 @@ import json
 import time
 import uuid
 
-HOST = "127.0.0.1"
+HOST = "10.62.217.28"
 PORT = 5000
-INTERVAL = 10  # segundos
+INTERVAL = 30  # segundos
 
 SERVER_UUID = str(uuid.uuid4())
 
