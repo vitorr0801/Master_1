@@ -10,9 +10,6 @@ WORKER_UUID = "W-PYTHON-01"
 
 
 def process_task(user):
-    """
-    Simula processamento da tarefa
-    """
 
     print(f"[WORKER] Processando usuário: {user}")
 
@@ -28,7 +25,11 @@ def start_worker():
 
         try:
 
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock = socket.socket(
+                socket.AF_INET,
+                socket.SOCK_STREAM
+            )
+
             sock.connect((HOST, PORT))
 
             print("[WORKER] Conectado ao master")
@@ -37,6 +38,7 @@ def start_worker():
 
             while True:
 
+                # Solicita trabalho
                 request = {
                     "WORKER": "ALIVE",
                     "UUID": WORKER_UUID
@@ -46,33 +48,49 @@ def start_worker():
                     (json.dumps(request) + "\n").encode()
                 )
 
-                data = sock.recv(1024).decode()
+                data = sock.recv(1024)
 
                 if not data:
                     raise ConnectionError(
-                        "Conexão encerrada pelo master"
+                        "Master desconectado"
                     )
 
-                buffer += data
+                buffer += data.decode()
 
                 while "\n" in buffer:
 
-                    message, buffer = buffer.split("\n", 1)
+                    message, buffer = buffer.split(
+                        "\n",
+                        1
+                    )
+
+                    if not message.strip():
+                        continue
 
                     payload = json.loads(message)
 
+                    # Ignora ACK
+                    if payload.get("STATUS") == "ACK":
+                        continue
+
                     task = payload.get("TASK")
 
+                    # Sem tarefas disponíveis
                     if task == "NO_TASK":
 
-                        print("[WORKER] Sem tarefas")
+                        print(
+                            "[WORKER] Sem tarefas"
+                        )
 
                         time.sleep(5)
                         continue
 
+                    # Executa tarefa
                     if task == "QUERY":
 
-                        user = payload.get("USER")
+                        user = payload.get(
+                            "USER"
+                        )
 
                         process_task(user)
 
@@ -83,19 +101,47 @@ def start_worker():
                         }
 
                         sock.sendall(
-                            (json.dumps(result) + "\n").encode()
+                            (
+                                json.dumps(result)
+                                + "\n"
+                            ).encode()
                         )
 
-                        print(
-                            f"[WORKER] Resultado enviado para {user}"
-                        )
+                        # Aguarda ACK
+                        ack_data = sock.recv(
+                            1024
+                        ).decode()
+
+                        if ack_data:
+
+                            try:
+
+                                ack = json.loads(
+                                    ack_data.strip()
+                                )
+
+                                if (
+                                    ack.get(
+                                        "STATUS"
+                                    )
+                                    == "ACK"
+                                ):
+
+                                    print(
+                                        "[WORKER] "
+                                        "ACK recebido"
+                                    )
+
+                            except Exception:
+                                pass
 
                 time.sleep(1)
 
         except Exception as e:
 
             print(
-                f"[ERRO] {e}. Reconectando em 5 segundos..."
+                f"[ERRO] {e}. "
+                f"Reconectando em 5s..."
             )
 
             time.sleep(5)
