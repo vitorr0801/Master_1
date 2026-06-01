@@ -9,57 +9,25 @@ PORT = 5000
 WORKER_UUID = "W-PYTHON-01"
 
 
-# =========================
-# EXECUÇÃO DE TAREFAS
-# =========================
-def execute_task(task, payload):
-    print(f"[WORKER] Executando: {task}")
+def process_task(user):
+    """
+    Simula processamento da tarefa
+    """
 
-    time.sleep(random.uniform(1, 3))  # simula processamento
+    print(f"[WORKER] Processando usuário: {user}")
 
-    # tarefas compatíveis com seu master
-    if task == "PING":
-        return {"TASK": "PING", "RESPONSE": "PONG", "WORKER": WORKER_UUID}
+    tempo = random.randint(3, 8)
+    time.sleep(tempo)
 
-    elif task == "GET_TIME":
-        return {"TASK": "GET_TIME", "TIME": time.ctime(), "WORKER": WORKER_UUID}
-
-    elif task == "ECHO":
-        return {
-            "TASK": "ECHO",
-            "MESSAGE": payload.get("MESSAGE", ""),
-            "WORKER": WORKER_UUID
-        }
-
-    elif task == "GET_STATUS":
-        return {
-            "TASK": "GET_STATUS",
-            "STATUS": "RUNNING",
-            "WORKER": WORKER_UUID
-        }
-
-    elif task == "HEARTBEAT":
-        return {
-            "TASK": "HEARTBEAT",
-            "RESPONSE": "ALIVE",
-            "WORKER": WORKER_UUID
-        }
-
-    else:
-        return {
-            "TASK": task,
-            "STATUS": "ERROR",
-            "MESSAGE": "TASK não suportada pelo worker",
-            "WORKER": WORKER_UUID
-        }
+    print(f"[WORKER] Usuário {user} concluído")
 
 
-# =========================
-# WORKER LOOP
-# =========================
 def start_worker():
+
     while True:
+
         try:
+
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.connect((HOST, PORT))
 
@@ -69,51 +37,67 @@ def start_worker():
 
             while True:
 
-                # =========================
-                # HEARTBEAT PADRÃO
-                # =========================
-                heartbeat = {
-                    "TASK": "HEARTBEAT",
-                    "WORKER_UUID": WORKER_UUID
+                request = {
+                    "WORKER": "ALIVE",
+                    "UUID": WORKER_UUID
                 }
 
-                sock.sendall((json.dumps(heartbeat) + "\n").encode())
+                sock.sendall(
+                    (json.dumps(request) + "\n").encode()
+                )
 
                 data = sock.recv(1024).decode()
 
                 if not data:
-                    print("[WORKER] Conexão encerrada pelo master")
-                    break
+                    raise ConnectionError(
+                        "Conexão encerrada pelo master"
+                    )
 
                 buffer += data
 
                 while "\n" in buffer:
+
                     message, buffer = buffer.split("\n", 1)
 
-                    try:
-                        payload = json.loads(message)
+                    payload = json.loads(message)
 
-                        task = payload.get("TASK")
+                    task = payload.get("TASK")
 
-                        # ignora respostas de controle
-                        if task == "HEARTBEAT":
-                            continue
+                    if task == "NO_TASK":
 
-                        # executa tarefa recebida
-                        response = execute_task(task, payload)
+                        print("[WORKER] Sem tarefas")
 
-                        # envia resposta ao master
-                        sock.sendall((json.dumps(response) + "\n").encode())
+                        time.sleep(5)
+                        continue
 
-                        print(f"[WORKER] Enviado resultado de {task}")
+                    if task == "QUERY":
 
-                    except json.JSONDecodeError:
-                        print("[ERRO] JSON inválido recebido")
+                        user = payload.get("USER")
 
-                time.sleep(2)
+                        process_task(user)
+
+                        result = {
+                            "UUID": WORKER_UUID,
+                            "STATUS": "OK",
+                            "USER": user
+                        }
+
+                        sock.sendall(
+                            (json.dumps(result) + "\n").encode()
+                        )
+
+                        print(
+                            f"[WORKER] Resultado enviado para {user}"
+                        )
+
+                time.sleep(1)
 
         except Exception as e:
-            print(f"[ERRO] {e} - reconectando em 5s")
+
+            print(
+                f"[ERRO] {e}. Reconectando em 5 segundos..."
+            )
+
             time.sleep(5)
 
 
