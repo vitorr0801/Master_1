@@ -3,7 +3,7 @@ import threading
 import json
 import queue
 
-HOST = "0.0.0.0"
+HOST = "10.62.217.31"
 PORT = 5000
 
 task_queue = queue.Queue()
@@ -19,6 +19,7 @@ task_queue.put({"user": "Marivaldo"})
 task_queue.put({"user": "Murilo"})
 task_queue.put({"user": "Teu"})
 task_queue.put({"user": "Pedro"})
+
 
 
 def handle_client(conn, addr):
