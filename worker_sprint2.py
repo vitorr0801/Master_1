@@ -41,7 +41,7 @@ def start_worker():
                 # Solicita trabalho
                 request = {
                     "WORKER": "ALIVE",
-                    "UUID": WORKER_UUID
+                    "WORKER_UUID": WORKER_UUID
                 }
 
                 sock.sendall(
@@ -95,9 +95,9 @@ def start_worker():
                         process_task(user)
 
                         result = {
-                            "UUID": WORKER_UUID,
+                            "WORKER_UUID": WORKER_UUID,
                             "STATUS": "OK",
-                            "USER": user
+                            "TASK": "QUERY"
                         }
 
                         sock.sendall(
