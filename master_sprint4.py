@@ -28,7 +28,7 @@ lent_workers = {}        # worker_uuid → {"conn": socket, "borrower": str}
 busy_workers = set()     # worker_uuids currently executing a task
 neighbor_conns = {}      # "ip:port" → socket  (M2M connection pool)
 
-server_uuid = str(uuid.uuid4())
+server_uuid = str("Master_1")
 _user_counter = 0
 _help_requested = False
 
@@ -563,7 +563,7 @@ def _build_performance_report():
         "role":            "master",
         "task":            "performance_report",
         "timestamp":       now_iso,
-        "message_id":      str(uuid.uuid4()),
+        "message_id":      str("Master_1"),
         "payload_version": "sprint4-monitor",
         "performance": {
             "system": {
@@ -630,14 +630,31 @@ def build_monitor_report(server_uuid=None, role="master"):
 
 
 def _send_to_supervisor(payload):
-    """Open TLS/TCP to supervisor, send JSON + \n, close — no response expected."""
+    print(payload)
     raw = (_json.dumps(payload) + "\n").encode("utf-8")
-    ctx = ssl.create_default_context()
+
     try:
-        with socket.create_connection((SUPERVISOR_HOST, SUPERVISOR_PORT), timeout=10) as raw_sock:
-            with ctx.wrap_socket(raw_sock, server_hostname=SUPERVISOR_SNI) as tls_sock:
-                tls_sock.sendall(raw)
-        _log("SUPERVISOR", f"Relatório enviado — msg_id={payload['message_id'][:8]}")
+        with socket.create_connection(
+            (SUPERVISOR_HOST, SUPERVISOR_PORT),
+            timeout=10
+        ) as sock:
+
+            if SUPERVISOR_TLS:
+                ctx = ssl.create_default_context()
+
+                with ctx.wrap_socket(
+                    sock,
+                    server_hostname=SUPERVISOR_SNI
+                ) as tls_sock:
+                    tls_sock.sendall(raw)
+            else:
+                sock.sendall(raw)
+
+        _log(
+            "SUPERVISOR",
+            f"Relatório enviado — msg_id={payload['message_id'][:8]}"
+        )
+
     except Exception as e:
         _log("SUPERVISOR", f"Falha ao enviar: {e}")
 
