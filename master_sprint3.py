@@ -5,6 +5,7 @@ import queue
 import uuid
 import time
 import logging
+import os
 from datetime import datetime
 
 # Configuração de logging
@@ -41,6 +42,11 @@ neighbor_masters = {
     }
 }
 
+SUPERVISOR_HOST = os.getenv("SUPERVISOR_HOST", "nuted-ia.dev")
+SUPERVISOR_PORT = int(os.getenv("SUPERVISOR_PORT", "443"))
+SUPERVISOR_TLS = True
+SUPERVISOR_INTERVAL_SECONDS = int(os.getenv("SUPERVISOR_INTERVAL_SECONDS", "10"))
+
 # Fila thread-safe
 task_queue = queue.Queue()
 
@@ -57,6 +63,7 @@ def get_borrowed_workers_list():
     """Retorna lista de workers emprestados"""
     with borrowed_workers_lock:
         return list(borrowed_workers.values())
+
 
 def monitor_load():
     """Monitora carga e dispara pedidos de ajuda se necessário"""
@@ -558,7 +565,7 @@ def start_server():
         daemon=True,
         name="MonitorConnections"
     ).start()
-    
+
     try:
         while True:
             conn, addr = server.accept()
