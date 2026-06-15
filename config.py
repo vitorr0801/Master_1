@@ -13,12 +13,13 @@ MASTER_ID = "Master_1"
 
 # Neighbor masters for M2M negotiation (Sprint 3).
 # MAX_NEIGHBOR_MASTERS = 1: nesta etapa apenas 1 master vizinho é permitido.
-MAX_NEIGHBOR_MASTERS = 4
+MAX_NEIGHBOR_MASTERS = 5
 NEIGHBOR_MASTERS = [
     {"master_id": "Master_2", "ip": "10.62.217.24", "port": 10000},
     {"master_id": "Master_3", "ip": "10.62.217.219", "port": 10000},
     {"master_id": "Master_4", "ip": "10.62.217.216", "port": 10000},
-    {"master_id": "Master_5", "ip": "10.62.217.39", "port": 10000}
+    {"master_id": "Master_5", "ip": "10.62.217.39", "port": 10000},
+    {"master_id": "Master_1.1", "ip": "10.62.217.208", "port": 10000}
 ]
 
 # --- CONFIGURAÇÕES DE ELEIÇÃO ---
